@@ -2,6 +2,7 @@ const http = require('http');
 const url = require('url');
 const fs = require('fs');
 const queryString = require('query-string');
+const { error } = require('console');
 
 const hostname = '127.0.0.1';
 const port = 3000;
@@ -22,50 +23,59 @@ function deletar() {
 const server = http.createServer((request, response) => {
   const urlPathName = url.parse(request.url, true);
   const params = queryString.parse(urlPathName.search);
-  const pathUser = `${filePath}Aluno${params.Id}.json`;
   const filePath = './Users/';
-  const fileExists = fs.existsSync(pathUser);
 
   if (urlPathName.pathname == '/create-user/') {
-    fs.writeFileSync(pathUser, JSON.stringify({ Aluno: params, CreatedeByUrl: request.url }), (error) => {
+    fs.writeFileSync(`${filePath}Aluno${params.Id}.json`, JSON.stringify({ Aluno: params, CreatedeByUrl: request.url }), (error) => {
       if (error) {
         throw error;
       }
       deletar();
     });
-    response.statusCode = 200;
+    response.statusCode = 201;
+    response.statusMessage;
     response.setHeader('Content-Type', 'text/plain');
     response.end(JSON.stringify({ Alunos: params }));
   }
 
   else if (urlPathName.pathname == '/select-user/') {
-    if (!fileExists) {
+    if (!fs.existsSync(`${filePath}Aluno${params.Id}.json`, (error) => { throw error })) {
+      response.statusCode = 404;
       response.end(JSON.stringify({ message: 'Este usuario nao encontrado' }));
     }
     else {
-      dados = fs.readFileSync(pathUser, function Data(error, data) {
+      dados = fs.readFileSync(`${filePath}Aluno${params.Id}.json`, function Data(error, data) {
         return data;
       });
-      response.statusCode = 200;
+      response.statusCode = 302;
+      response.statusMessage;
       response.setHeader('Content-Type', 'text/plain');
       response.end(dados);
     }
   }
 
-  else if (urlPathName == '/delet-user/') {
-    if (!fileExists) {
+  else if (urlPathName.pathname == '/delet-user/') {
+    if (!fs.existsSync(`${filePath}Aluno${params.Id}.json`, (error) => { throw error })) {
       response.end(JSON.stringify({ message: 'Este usuario nao encontrado' }));
     }
-    fs.unlinkSync(pathUser, (error) => {
-      if (error) {
-        console.log(error);
-        throw error;
-      }
-      response.end(JSON.stringify({ message: 'Foi pro saco!' }));
-    });
+    else {
+      fs.unlinkSync(`${filePath}Aluno${params.Id}.json`);
+      response.statusCode = 200;
+      response.setHeader('Content-Type', 'text/plain');
+      response.end(JSON.stringify({
+        message: 'Usuário Deletado'
+      }));
+    }
+  }
+  else {
+    response.statusCode = 200;
+    response.setHeader('Content-Type', 'text/plain');
+    response.end(JSON.stringify({
+      message: 'Nada aqui, ainda!'
+    }));
   }
 });
 
 server.listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}/`);
+  console.log(`Server running at http://${hostname}:${port}/`)
 });
