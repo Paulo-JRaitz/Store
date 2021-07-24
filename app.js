@@ -2,7 +2,6 @@ const http = require('http');
 const url = require('url');
 const fs = require('fs');
 const queryString = require('query-string');
-const { error } = require('console');
 
 const hostname = '127.0.0.1';
 const port = 3000;
